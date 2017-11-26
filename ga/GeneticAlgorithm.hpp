@@ -9,6 +9,22 @@ namespace galgo {
 
 //=================================================================================================
 
+template <typename T>
+class GAProblem {
+public:
+    virtual std::vector<T> Objective(const std::vector<T>&);
+    virtual std::vector<T> MyConstraint(const std::vector<T>&);
+};
+
+template <typename T>
+std::vector<T> GAProblem<T>::Objective(const std::vector<T>&) {
+    return {0};
+}
+template <typename T>
+std::vector<T> GAProblem<T>::MyConstraint(const std::vector<T>&) {
+    return {0};
+}
+
 template <typename T, int N = 16>
 class GeneticAlgorithm
 {
@@ -19,9 +35,6 @@ class GeneticAlgorithm
    friend class Population;
    template <typename K, int S>
    friend class Chromosome;
-
-   template <typename K>
-   using Func = std::vector<K> (*)(const std::vector<K>&);
 
 private:
    Population<T,N> pop;       // population of chromosomes
@@ -37,7 +50,7 @@ private:
   
 public: 
    // objective function pointer
-   Func<T> Objective; 
+   GAProblem<T> *Objective;
    // selection method initialized to roulette wheel selection                                   
    void (*Selection)(Population<T,N>&) = RWS;  
    // cross-over method initialized to 1-point cross-over                                
@@ -61,7 +74,7 @@ public:
    int precision = 5; // precision for outputting results
 
    // constructor
-   GeneticAlgorithm(Func<T> objective, int popsize, const std::vector<T>& lowerBound, const std::vector<T>& upperBound, int nbgen, bool output = false);
+   GeneticAlgorithm(GAProblem<T> *_problem, int popsize, const std::vector<T>& lowerBound, const std::vector<T>& upperBound, int nbgen, bool output = false);
    // run genetic algorithm
    void run();
    // return best chromosome 
@@ -84,9 +97,9 @@ private:
    
 // constructor
 template <typename T, int N>
-GeneticAlgorithm<T,N>::GeneticAlgorithm(Func<T> objective, int popsize, const std::vector<T>& lowerBound, const std::vector<T>& upperBound, int nbgen, bool output)
+GeneticAlgorithm<T,N>::GeneticAlgorithm(GAProblem<T> *_problem, int popsize, const std::vector<T>& lowerBound, const std::vector<T>& upperBound, int nbgen, bool output)
 {
-   this->Objective = objective;
+   this->Objective = _problem;
    this->nbparam = upperBound.size();
    this->popsize = popsize;
    this->matsize = popsize;
